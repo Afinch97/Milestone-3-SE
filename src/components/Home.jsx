@@ -1,29 +1,45 @@
-import React from "react";
+import React, {useState} from "react";
+import {Navigate} from "react-router-dom";
 
-function Home() {
-    const [user, setUser] = useState({username:"", password:""});
-        const form = useRef(null);
-
+const Home = ()=>{
+    const [user, setUser] = useState({username:"", password:"", remember:false});
+    const [error, setError] = useState("");
         const submit = e => {
             e.preventDefault();
-            console.log(form.current)
-            const data = new FormData(form.current);
-            fetch('/api', { method: 'POST', body: data })
+            console.log(JSON.stringify(user))
+            fetch('/login', { method: 'POST', headers:{'Content-Type':'application/json'} ,body: JSON.stringify(user) })
                 .then(res => res.json())
-                .then(json => setUser(json.user));
+                .then(json => {
+                    console.log(json)
+                    var key = Object.keys(json)
+                    console.log(key[0])
+                    if(key[0]==="success"){
+                        return <Navigate to='/login'  />;
+                    }
+                    else if(key[0]==="error"){
+                        setError(Object.values(json))
+                    }
+                });
         }
 
         return (
-            <div>
-            <form ref={form} onSubmit={submit}>
-                <input type="text" name="user[name]" onChange={e =>setUser({...user, username: e.target.value})} value={user.username} />
-                {user.errors.name && <p>{user.errors.name}</p>}
+            <>
+            <div className="error"><p>{error}</p></div>
+            <form  onSubmit={submit}>
+                <label htmlFor="user">Name: </label>
+                <input type="text" name="user" id="user" onChange={e =>setUser({...user, username: e.target.value})} value={user.username}/>
 
-                <input type="email" name="user[email]" onChange={e =>setUser({...user, password: e.target.value})} value={user.password} />
-                {user.errors.email && <p>{user.errors.email}</p>}
+                <label htmlFor="user">Password: </label>
+                <input type="password" name="password" id="password" onChange={e =>setUser({...user, password: e.target.value})} value={user.password} />
 
+                <label className="checkbox">
+                    <input type="checkbox" name="remember" value={user.remember} onChange={e =>setUser({...user, remember: !user.remember})} />
+                    Remember me
+                </label>
                 <input type="submit" name="Sign Up" />
             </form>
-            </div>
+            </>
         )
+
 }
+export default Home

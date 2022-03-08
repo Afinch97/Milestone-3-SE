@@ -1,7 +1,23 @@
-from flask import Flask, Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import UserMixin, LoginManager, login_user, login_required, current_user, logout_user
+from flask import (
+    Flask,
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    request,
+    flash,
+    jsonify,
+)
+from flask_login import (
+    UserMixin,
+    LoginManager,
+    login_user,
+    login_required,
+    current_user,
+    logout_user,
+)
 from sqlalchemy import over, table, select
-from tmdb import  get_trending,get_genres, movie_search, movie_info, get_favorites
+from tmdb import get_trending, get_genres, movie_search, movie_info, get_favorites
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import over, table, select, update
 from dotenv import find_dotenv, load_dotenv
@@ -16,24 +32,30 @@ import re
 load_dotenv(find_dotenv())
 
 app = Flask(__name__)
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-app.config['SECRET_KEY'] = 'secret-key-goes-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+app.config["SECRET_KEY"] = "secret-key-goes-here"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 if app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgres://"):
-    app.config["SQLALCHEMY_DATABASE_URI"] = app.config["SQLALCHEMY_DATABASE_URI"].replace("postgres://", "postgresql://") 
+    app.config["SQLALCHEMY_DATABASE_URI"] = app.config[
+        "SQLALCHEMY_DATABASE_URI"
+    ].replace("postgres://", "postgresql://")
 db = SQLAlchemy(app, session_options={"autocommit": True})
 db.init_app(app)
 
 login_manager = LoginManager()
-login_manager.login_view = 'login'
+login_manager.login_view = "login"
 login_manager.init_app(app)
 
+
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
+    id = db.Column(
+        db.Integer, primary_key=True
+    )  # primary keys are required by SQLAlchemy
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(1000))
-    
+
+
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     movie_id = db.Column(db.Integer)
@@ -41,18 +63,21 @@ class Reviews(db.Model):
     user = db.Column(db.String(1000))
     text = db.Column(db.String(1000))
 
+
 class Favorites(db.Model):
-    __tablename__ = 'Favorites'
+    __tablename__ = "Favorites"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100))
     movie = db.Column(db.Integer)
-    
-    def __repr__(self) :
+
+    def __repr__(self):
         return repr(self.movie)
-    
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 # set up a separate route to serve the index.html file generated
 # by create-react-app/npm run build.
@@ -81,13 +106,28 @@ def funfact():
     ]
     return jsonify(facts)
 
+
 @bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     print(data)
-
-    return jsonify(data)
+    print(data["username"])
+    email = data["username"]
+    name = data["username"]
+    password = data["password"]
+    remember = data["remember"]
     
+    user = User.query.filter_by(name=name).first()
+    if not user:
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"error":"User does not exist, please create new account."})
+    if not user or not check_password_hash(user.password, password):
+        flash("Username or Password Incorrect")
+        return jsonify({"error":"Password is incorrect"})
+    login_user(user, remember=remember)
+    return jsonify({"success":"Successfully logged in"})
+
 
 app.register_blueprint(bp)
 

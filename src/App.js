@@ -1,14 +1,14 @@
 import logo from './logo.svg';
 import './App.css';
 import React, { useState } from 'react';
-import {About}from './components';
+import {About, Home}from './components';
 
 const App = () => {
  
   return (
     <>
     <div className="App">
-    <About />
+    <Home />
     </div>
     </>
   );
