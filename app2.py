@@ -16,7 +16,7 @@ from flask_login import (
     current_user,
     logout_user,
 )
-from sqlalchemy import over, table, select
+from sqlalchemy import false, over, table, select, true
 from tmdb import get_trending, get_genres, movie_search, movie_info, get_favorites
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import over, table, select, update
@@ -90,10 +90,12 @@ bp = Blueprint(
 )
 
 # route for serving React page
-@bp.route("/")
-def index():
+@bp.route("/", defaults={'path': ''})
+@bp.route('/<path:path>')
+def index(path):
     # NB: DO NOT add an "index.html" file in your normal templates folder
     # Flask will stop serving this React page correctly
+    #path is a catch all to keep the react-router up
     return render_template("index.html")
 
 
@@ -111,7 +113,6 @@ def funfact():
 def login():
     data = request.get_json()
     print(data)
-    print(data["username"])
     email = data["username"]
     name = data["username"]
     password = data["password"]
@@ -128,6 +129,152 @@ def login():
     login_user(user, remember=remember)
     return jsonify({"success":"Successfully logged in"})
 
+@bp.route("/register", methods=["POST"])
+def register():
+    data = request.get_json()
+    email = data["email"]
+    name = data["username"]
+    password = data["password"]
+    
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify({"error":"User already exists"})    
+    new_user = User(email=email, name=name, password=generate_password_hash(password, method='sha256'))
+    db.session.begin()
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({"success":"successfully logged in"})
+
+@app.route('/profile')
+@login_required
+def profile():
+    info={"name":current_user.name, "id":current_user.id}
+    return jsonify(info)
+
+@app.route('/favorites', methods=["POST","GET"])
+@login_required
+def favorites():
+    fav_movies = Favorites.query.filter_by(email=current_user.email).all()
+    print(fav_movies)
+
+    favs = fav_movies
+    if favs is not None:
+        fav_length = len(favs)
+        print(fav_length)
+        favorites = get_favorites(favs)
+        fav_titles = favorites['fav_titles']
+        fav_posters = favorites['fav_posters']
+        fav_ids = favorites['fav_ids']
+        fav_taglines = favorites['fav_taglines']
+        
+        fav_wikiLinks=[]
+        for i in range(len(fav_titles)):
+            links = MediaWiki.get_wiki_link(fav_titles[i])
+        try:
+            fav_wikiLinks.append(links[3][0])#This is the part that has the link to the wikipedia page
+        except:
+            fav_wikiLinks.append("#")#The links get out of order If I don't do this
+            print("Link doesn't exist")      
+        
+        fav_dict={
+            "fav_length" : fav_length,
+            "fav_titles" : fav_titles,
+            "fav_posters" : fav_posters,
+            "fav_taglines" : fav_taglines,
+            "fav_ids" : fav_ids,
+            "fav_wikiLinks" : fav_wikiLinks
+        }    
+        return jsonify(fav_dict)   
+        
+    return jsonify("no favorites")
+        
+@bp.route('/search', methods=["POST","GET"])
+#@login_required
+def search():
+    data = get_genres()
+    movies = get_trending()
+    title = 'Trending'    
+    if request.method == "POST":
+        query = request.get_json()
+        title = query
+        movies = movie_search(query)
+                     
+    titles = movies['titles']
+    overviews = movies['overviews']
+    posters = movies['posters']
+    ids = movies['ids']
+    taglines = movies['taglines']
+    
+    wikiLinks=[]
+    for i in range(len(titles)):
+        links = MediaWiki.get_wiki_link(titles[i])
+        try:
+            wikiLinks.append(links[3][0])#This is the part that has the link to the wikipedia page
+        except:
+            wikiLinks.append("#")#The links get out of order If I don't do this
+            print("Link doesn't exist")
+    search_dict={
+        "title" : title,
+        "genres" : data,
+        "titles" : titles,
+        "overviews" : overviews, 
+        "posters" : posters,
+        "taglines" : taglines,
+        "ids" : ids,
+        "wikiLinks" : wikiLinks,
+    }   
+    return jsonify(search_dict)
+
+@bp.route('/movie/<id>', methods=["POST","GET"])
+def viewMovie(id):
+    (title, genres, poster, tagline, overview, release_date) = movie_info(id)
+    if request.method == "POST":
+        data = request.get_json()
+        rating = data["rating"]
+        textReview = data["textReview"]
+        new_rating = Reviews(movie_id=int(id), user=current_user.name, rating=rating, text=textReview)
+        db.session.begin()
+        db.session.add(new_rating)
+        db.session.commit()
+
+    reviews = Reviews.query.filter_by(movie_id=id).all()
+    
+    if reviews:
+        users=[]
+        ratings=[]
+        texts=[]
+        for i in reviews:
+            print (i.__dict__)
+            users.append(i.__dict__.get('user'))
+            ratings.append(i.__dict__.get('rating'))
+            texts.append(i.__dict__.get('text'))
+        viewMovie_dict={
+            "title" : title,
+            "genres" : genres,
+            "poster" : poster, 
+            "tagline" : tagline,
+            "overview" : overview,
+            "release_date" : release_date, 
+            "id" : id,
+            "user":users, 
+            "rating":ratings,
+            "text":texts,
+            "reviews":"true",
+            "rev_length":len(ratings),
+        }
+        return jsonify(viewMovie_dict)
+    viewMovie_dict={
+        "title" : title,
+        "genres" : genres,
+        "poster" : poster, 
+        "tagline" : tagline,
+        "overview" : overview,
+        "release_date" : release_date, 
+        "id" : id,
+        "reviews":"false"
+    }   
+    return jsonify(viewMovie_dict)
 
 app.register_blueprint(bp)
 
