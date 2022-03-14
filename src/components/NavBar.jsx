@@ -16,7 +16,7 @@ const NavBar = () => {
 }
   return (
     <div class="topnav" id="myTopNav">
-        <NavLink to={"/searchy"} ><a class="active">Home</a></NavLink>
+        <NavLink to={"/searchy"} ><a>Home</a></NavLink>
         <a href="https://github.com/Afinch97/Milestone-3-SE" target="_blank">About</a>
         <NavLink to={"/favs"}><a>Favorites</a></NavLink>
         <div class="search-container">

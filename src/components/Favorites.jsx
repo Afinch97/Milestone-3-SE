@@ -19,11 +19,11 @@ const Favorites = () =>  {
             .then(data => {
                 console.log(data);
                 setTest(data)
-                setLength(data.fav_length)
-                setIds(data.fav_ids)
-                setPosters(data.fav_posters)
-                setTaglines(data.fav_taglines)
-                setTitles(data.fav_titles)
+                setLength(data.length)
+                setIds(data.ids)
+                setPosters(data.posters)
+                setTaglines(data.taglines)
+                setTitles(data.titles)
                 setThere(true)
             });        
     };

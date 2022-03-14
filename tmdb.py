@@ -134,7 +134,7 @@ def get_favorites(favs):
         info = requests.get(INFO_URL)
         data = info.json()
         title = data['title']
-        ids.append(favs[i])
+        ids.append(int(str(favs[i])))
         titles.append(title)
         poster_path = data['poster_path']
         if poster_path == None:

@@ -23,7 +23,6 @@ from sqlalchemy import over, table, select, update
 from dotenv import find_dotenv, load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from multiprocessing import synchronize
-from django.forms.models import model_to_dict
 import requests
 import MediaWiki
 import sqlalchemy
@@ -72,7 +71,7 @@ class Favorites(db.Model):
     movie = db.Column(db.Integer)
 
     def __repr__(self):
-        return repr(self.movie)
+        return repr(int(self.movie))
 
 
 @login_manager.user_loader
@@ -162,8 +161,11 @@ def favorites():
     fav_movies = Favorites.query.filter_by(email=current_user.email).all()
     print("in between fav_movies")
     print(fav_movies)
+    temp=[]
     for i in fav_movies:
             print(i)
+            print(type(i))
+            temp.append(i)
     
     '''
     favs =[]
@@ -200,9 +202,15 @@ def favorites():
             "ids" : fav_ids,
         }    
         #return jsonify(fav_dict)
-        model_to_dict
         print(fav_dict)
-        return jsonify({"yo":"momma a hoe"})   
+        print(type(fav_dict))
+        print(type(fav_length))
+        print(type(fav_titles))
+        print(type(fav_posters))
+        print(type(fav_taglines))
+        print(type(fav_ids))
+        print(jsonify(fav_titles))
+        return jsonify(fav_dict)   
         
     return jsonify({"no favorites"})
         
