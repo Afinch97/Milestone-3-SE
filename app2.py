@@ -23,6 +23,7 @@ from sqlalchemy import over, table, select, update
 from dotenv import find_dotenv, load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from multiprocessing import synchronize
+from django.forms.models import model_to_dict
 import requests
 import MediaWiki
 import sqlalchemy
@@ -90,14 +91,17 @@ bp = Blueprint(
 )
 
 # route for serving React page
-@bp.route("/", defaults={'path': ''})
-@bp.route('/<path:path>')
+@app.route("/", defaults={'path': ''})
+@app.route('/<path:path>')
 def index(path):
     # NB: DO NOT add an "index.html" file in your normal templates folder
     # Flask will stop serving this React page correctly
     #path is a catch all to keep the react-router up
     return render_template("index.html")
 
+@bp.route("/")
+def index():
+    return render_template("index.html")
 
 @bp.route("/funfact")
 def funfact():
@@ -144,7 +148,7 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     
-    return jsonify({"success":"successfully logged in"})
+    return jsonify({"success":"successfully Registered"})
 
 @app.route('/profile')
 @login_required
@@ -152,14 +156,33 @@ def profile():
     info={"name":current_user.name, "id":current_user.id}
     return jsonify(info)
 
-@app.route('/favorites', methods=["POST","GET"])
+@bp.route("/favorites", methods=["GET","POST"])
 @login_required
 def favorites():
     fav_movies = Favorites.query.filter_by(email=current_user.email).all()
+    print("in between fav_movies")
     print(fav_movies)
-
+    for i in fav_movies:
+            print(i)
+    
+    '''
+    favs =[]
+    for i in fav_movies:
+            #print(i)
+            favs.append(i.__dict__)
+    print(favs)
+    if reviews:
+        users=[]
+        ratings=[]
+        texts=[]
+        for i in reviews:
+            print (i.__dict__)
+            users.append(i.__dict__.get('user'))
+            ratings.append(i.__dict__.get('rating'))
+            texts.append(i.__dict__.get('text'))
+    '''
     favs = fav_movies
-    if favs is not None:
+    if favs:
         fav_length = len(favs)
         print(fav_length)
         favorites = get_favorites(favs)
@@ -167,30 +190,24 @@ def favorites():
         fav_posters = favorites['fav_posters']
         fav_ids = favorites['fav_ids']
         fav_taglines = favorites['fav_taglines']
-        
-        fav_wikiLinks=[]
-        for i in range(len(fav_titles)):
-            links = MediaWiki.get_wiki_link(fav_titles[i])
-        try:
-            fav_wikiLinks.append(links[3][0])#This is the part that has the link to the wikipedia page
-        except:
-            fav_wikiLinks.append("#")#The links get out of order If I don't do this
-            print("Link doesn't exist")      
+        print(favorites)
         
         fav_dict={
-            "fav_length" : fav_length,
-            "fav_titles" : fav_titles,
-            "fav_posters" : fav_posters,
-            "fav_taglines" : fav_taglines,
-            "fav_ids" : fav_ids,
-            "fav_wikiLinks" : fav_wikiLinks
+            "length" : fav_length,
+            "titles" : fav_titles,
+            "posters" : fav_posters,
+            "taglines" : fav_taglines,
+            "ids" : fav_ids,
         }    
-        return jsonify(fav_dict)   
+        #return jsonify(fav_dict)
+        model_to_dict
+        print(fav_dict)
+        return jsonify({"yo":"momma a hoe"})   
         
-    return jsonify("no favorites")
+    return jsonify({"no favorites"})
         
-@bp.route('/search', methods=["POST","GET"])
-#@login_required
+@bp.route('/search', methods=["GET"])
+@login_required
 def search():
     data = get_genres()
     movies = get_trending()
@@ -226,7 +243,41 @@ def search():
     }   
     return jsonify(search_dict)
 
+@bp.route('/search/<query>', methods=["GET"])
+@login_required
+def searchResult(query):
+    data = get_genres()
+    title = query
+    movies = movie_search(query)
+                     
+    titles = movies['titles']
+    overviews = movies['overviews']
+    posters = movies['posters']
+    ids = movies['ids']
+    taglines = movies['taglines']
+    
+    wikiLinks=[]
+    for i in range(len(titles)):
+        links = MediaWiki.get_wiki_link(titles[i])
+        try:
+            wikiLinks.append(links[3][0])#This is the part that has the link to the wikipedia page
+        except:
+            wikiLinks.append("#")#The links get out of order If I don't do this
+            print("Link doesn't exist")
+    search_dict={
+        "title" : title,
+        "genres" : data,
+        "titles" : titles,
+        "overviews" : overviews, 
+        "posters" : posters,
+        "taglines" : taglines,
+        "ids" : ids,
+        "wikiLinks" : wikiLinks,
+    }   
+    return jsonify(search_dict)
+
 @bp.route('/movie/<id>', methods=["POST","GET"])
+@login_required
 def viewMovie(id):
     (title, genres, poster, tagline, overview, release_date) = movie_info(id)
     if request.method == "POST":
@@ -250,6 +301,7 @@ def viewMovie(id):
             ratings.append(i.__dict__.get('rating'))
             texts.append(i.__dict__.get('text'))
         viewMovie_dict={
+            "current_user": current_user.name,
             "title" : title,
             "genres" : genres,
             "poster" : poster, 
@@ -265,6 +317,7 @@ def viewMovie(id):
         }
         return jsonify(viewMovie_dict)
     viewMovie_dict={
+        "current_user": current_user.name,
         "title" : title,
         "genres" : genres,
         "poster" : poster, 
@@ -275,6 +328,11 @@ def viewMovie(id):
         "reviews":"false"
     }   
     return jsonify(viewMovie_dict)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
 
 app.register_blueprint(bp)
 

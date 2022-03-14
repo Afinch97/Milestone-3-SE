@@ -1,3 +1,4 @@
 -Used double quotes instead of single for fetch and wasn't getting response took a very long time to realize that was the issue
 -overall fetch is the greatest issue so far
 -At one point it stopped rendering becasue root was in single quotes
+-conflicting urls with the router

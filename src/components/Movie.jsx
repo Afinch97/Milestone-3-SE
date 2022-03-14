@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import "./styleMovie.css";
 
 const Movie = () => {
-    const { movieId } = useParams
+    const { movieId } = useParams();
+    console.log({movieId})
     let url = window.location.pathname
     const[justTesting, setJustTestint]= useState({})
     const[areReviews, setAreReviews] = useState(false)
@@ -19,9 +20,11 @@ const Movie = () => {
     const [text, setText] = useState([])
     const [reviewLength, setReviewLength] = useState()
     const [startForm, setStartForm] = useState("Be the first to write a review:")
+    const [inputs, setInputs] = useState({})
+    const [current_user, setCurrent_user] = useState("")
 
     const getRepo = async () =>{
-        await fetch(url)
+        await fetch(`/movie/${movieId}`)
             .then(response => response.json())
             .then(data => {
                 console.log(data);
@@ -34,6 +37,7 @@ const Movie = () => {
                 setPoster(data.poster)
                 setReleaseDate(data.release_date)
                 setGenres(data.genres)
+                setCurrent_user(data.current_user)
                 if(data.reviews === "true"){
                     setAreReviews(true)
                     setUser(data.user)
@@ -67,6 +71,25 @@ const Movie = () => {
             )
         }
     }
+    const submit = (e)  => {
+        e.preventDefault();
+        setUser(olduser => [...olduser, current_user])
+        setRating(oldrating => [...oldrating, inputs.rating])
+        setText(oldtext => [...oldtext, inputs.textReview ])
+        setReviewLength(reviewLength + 1)
+        reviews.push(
+            <>
+                <div class="name_and_rating">
+                    <h3>{current_user}: {inputs.rating}</h3>
+                </div>
+                <div class="review_text">
+                    {inputs.textReview}
+                </div><br></br>
+            </>
+        )
+        fetch(`/movie/${movieId}`, { method: 'POST', headers:{'Content-Type':'application/json'} ,body: JSON.stringify(inputs) })
+        
+    }
 
     return (
     <>
@@ -92,10 +115,10 @@ const Movie = () => {
             {reviews}
             </>
         }
-        <form method="POST" action="/movie/{{id}}" class="reviewbox">
+        <form onSubmit={submit} action="/movie/{{id}}" class="reviewbox">
         <h2>{startForm}</h2>
-        <label for="rating">Rate the movie out of 10: </label><input type="number" name="rating" min="0" max="10"/><br></br>
-        <label for="text">Review: </label><input type="text" name="textReview" size="60"/><br></br>
+        <label for="rating">Rate the movie out of 10: </label><input type="number" name="rating" min="0" max="10" onChange={e =>setInputs({...inputs, rating: e.target.value})} value={inputs.rating}/><br></br>
+        <label for="text">Review: </label><input type="text" name="textReview" size="60" onChange={e =>setInputs({...inputs, textReview: e.target.value})} value={inputs.textReview}/><br></br>
         <button type="submit">Submit Review</button>
         </form>
     </div>

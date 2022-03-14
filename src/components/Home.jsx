@@ -1,10 +1,11 @@
 import React, {useState} from "react";
-import {Navigate} from "react-router-dom";
+import {Navigate, useNavigate} from "react-router-dom";
 
 const Home = ()=>{
     const [user, setUser] = useState({username:"", password:"", remember:false});
     const [error, setError] = useState("");
-        const submit = e => {
+    let navigate = useNavigate();
+        const Submit = e => {
             e.preventDefault();
             console.log(JSON.stringify(user))
             fetch('/login', { method: 'POST', headers:{'Content-Type':'application/json'} ,body: JSON.stringify(user) })
@@ -14,7 +15,7 @@ const Home = ()=>{
                     var key = Object.keys(json)
                     console.log(key[0])
                     if(key[0]==="success"){
-                        return <Navigate to='/login'  />;
+                        navigate("/searchy");
                     }
                     else if(key[0]==="error"){
                         setError(Object.values(json))
@@ -25,7 +26,7 @@ const Home = ()=>{
         return (
             <>
             <div className="error"><p>{error}</p></div>
-            <form  onSubmit={submit}>
+            <form  onSubmit={Submit}>
                 <label htmlFor="user">Name: </label>
                 <input type="text" name="user" id="user" onChange={e =>setUser({...user, username: e.target.value})} value={user.username}/>
 

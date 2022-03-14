@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import "./searchStyle.css";
 
-const Search = () =>  {
+const SearchResult = () =>  {
+    let { query } = useParams();
+    let url = window.location.pathname
     const [title, setTitle] = useState("")
     const [ids, setIds] = useState([])
     const [posters, setPosters] = useState([])
@@ -10,7 +12,7 @@ const Search = () =>  {
     const [titles, setTitles] = useState([])
     const items= [];
     const getRepo = async () =>{
-        await fetch('/search')
+        await fetch(`/search/${query}`)
             .then(response => response.json())
             .then(data => {
                 console.log(data);
@@ -30,7 +32,7 @@ const Search = () =>  {
         items.push(
             <div class='item'>
                 <p><h2>({i+1}) {titles[i] }</h2>
-                <Link to={`/info/${ids[i]}`}><input type="submit" value="More info"/></Link>
+                <Link to={`/${ids[i]}`}><input type="submit" value="More info"/></Link>
                 </p>
                 <img src={String(posters[i])} />
                 <p>{ taglines[i] }</p>
@@ -51,4 +53,4 @@ const Search = () =>  {
     )
 }
 
-export default Search
+export default SearchResult

@@ -1,19 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import "./NavBar.css"
+import { NavLink, useNavigate } from 'react-router-dom';
 
 const NavBar = () => {
+  const [term, setTerm] = useState("")
+  let navigate = useNavigate();
+  const logout = () =>{
+    fetch('/logout')
+    window.location = '/';
+  }
+  const Submit = (e)  => {
+    e.preventDefault();
+    //navigate(`/searchy/${term}`)
+    window.location = `/searchy/${term}`;
+}
   return (
     <div class="topnav" id="myTopNav">
-        <a class="active" href="/search">Home</a>
-        <a href="https://github.com/Afinch97/project1-afinch6">About</a>
-        <a href="/favorites">Favorites</a>
+        <NavLink to={"/searchy"} ><a class="active">Home</a></NavLink>
+        <a href="https://github.com/Afinch97/Milestone-3-SE" target="_blank">About</a>
+        <NavLink to={"/favs"}><a>Favorites</a></NavLink>
         <div class="search-container">
-            <form method="POST" action="/search">
-                <input type="text" placeholder="Search..." name="search"></input>
+            <form onSubmit={Submit}>
+                <input type="text" placeholder="Search..." name="search"onChange={e =>setTerm(e.target.value)} value={term}></input>
                 <button type="submit"><i class="fa fa-search"></i></button>
             </form>
         </div>
-        <a href="/logout" class="Logout">Logout</a>
+        <a onClick={logout} class="Logout">Logout</a>
     </div>
   )
 }
