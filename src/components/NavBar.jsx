@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import "./NavBar.css"
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 
 const NavBar = () => {
   const [term, setTerm] = useState("")
@@ -19,6 +19,7 @@ const NavBar = () => {
         <NavLink to={"/searchy"} ><a>Home</a></NavLink>
         <a href="https://github.com/Afinch97/Milestone-3-SE" target="_blank">About</a>
         <NavLink to={"/favs"}><a>Favorites</a></NavLink>
+        <NavLink to={"/myComments"}><a>Comments</a></NavLink>
         <div class="search-container">
             <form onSubmit={Submit}>
                 <input type="text" placeholder="Search..." name="search"onChange={e =>setTerm(e.target.value)} value={term}></input>

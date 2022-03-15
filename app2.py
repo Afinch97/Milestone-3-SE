@@ -159,30 +159,7 @@ def profile():
 @login_required
 def favorites():
     fav_movies = Favorites.query.filter_by(email=current_user.email).all()
-    print("in between fav_movies")
     print(fav_movies)
-    temp=[]
-    for i in fav_movies:
-            print(i)
-            print(type(i))
-            temp.append(i)
-    
-    '''
-    favs =[]
-    for i in fav_movies:
-            #print(i)
-            favs.append(i.__dict__)
-    print(favs)
-    if reviews:
-        users=[]
-        ratings=[]
-        texts=[]
-        for i in reviews:
-            print (i.__dict__)
-            users.append(i.__dict__.get('user'))
-            ratings.append(i.__dict__.get('rating'))
-            texts.append(i.__dict__.get('text'))
-    '''
     favs = fav_movies
     if favs:
         fav_length = len(favs)
@@ -201,15 +178,7 @@ def favorites():
             "taglines" : fav_taglines,
             "ids" : fav_ids,
         }    
-        #return jsonify(fav_dict)
         print(fav_dict)
-        print(type(fav_dict))
-        print(type(fav_length))
-        print(type(fav_titles))
-        print(type(fav_posters))
-        print(type(fav_taglines))
-        print(type(fav_ids))
-        print(jsonify(fav_titles))
         return jsonify(fav_dict)   
         
     return jsonify({"no favorites"})
@@ -287,7 +256,7 @@ def searchResult(query):
 @bp.route('/movie/<id>', methods=["POST","GET"])
 @login_required
 def viewMovie(id):
-    (title, genres, poster, tagline, overview, release_date) = movie_info(id)
+    (title, genres, poster, tagline, overview, release_date, lil_poster) = movie_info(id)
     if request.method == "POST":
         data = request.get_json()
         rating = data["rating"]
@@ -336,6 +305,76 @@ def viewMovie(id):
         "reviews":"false"
     }   
     return jsonify(viewMovie_dict)
+
+@bp.route('/add/<id>', methods=["POST","GET"])
+@login_required
+def addMovie(id):
+    favorites = Favorites.query.filter(Favorites.email.like("%"+current_user.email+"%")).all()
+    print(favorites)
+    if favorites is None:
+        new_movie = Favorites(email=current_user.email, movie=int(id))
+        db.session.begin()
+        db.session.add(new_movie)
+        db.session.commit()
+    if id in favorites:
+        return(jsonify("Movie is already added"))
+    new_movie = Favorites(email=current_user.email, movie=int(id))
+    db.session.begin()
+    db.session.add(new_movie)
+    db.session.commit()
+    return(jsonify("Movie is added"))
+
+@bp.route('/remove/<id>', methods=["POST","GET"])
+@login_required
+def removeMovie(id):
+    favorites = Favorites.query.filter_by(email=current_user.email,movie=id).first()
+    if favorites is None:
+        return (jsonify("Not in Favorites"))
+    db.session.begin()
+    db.session.delete(favorites)
+    db.session.commit()
+    return (jsonify("Removed from Favorites"))
+
+@bp.route('/reviewbbgurl', methods=["GET"])
+@login_required
+def gimme_my_reviews():
+    name = current_user.name
+    reviews = Reviews.query.filter_by(user=name).all()
+    if reviews:
+        my_reviews=[]
+        ratings=[]
+        texts=[]
+        movie_ids=[]
+        movies={}
+        for i in reviews:
+            print (i.__dict__)
+            my_reviews.append(i.__dict__.get('id'))
+            ratings.append(i.__dict__.get('rating'))
+            texts.append(i.__dict__.get('text'))
+            movie_ids.append(i.__dict__.get('movie_id'))
+            (title, genres, poster, tagline, overview, release_date, lil_poster) = movie_info(i.__dict__.get('movie_id'))
+            movies[i.__dict__.get('movie_id')] = (title, lil_poster)
+        view_ratings_dicts = {
+            "review_ids": my_reviews,
+            "current_user": current_user.name,
+            "texts": texts, 
+            "ratings": ratings,
+            "movies": movies,
+            "movie_ids": movie_ids, 
+            "length":len(ratings)
+        }
+        return jsonify(view_ratings_dicts)
+    return jsonify({"error":"you got no comments bro"})
+@bp.route('/delete_comment/<e>', methods=["GET"])
+def remove_that_review(e):
+    reviews = Reviews.query.filter_by(id=e).first()
+    if reviews is None:
+        return (jsonify("Review does not exist"))
+    db.session.begin()
+    db.session.delete(reviews)
+    db.session.commit()
+    return (jsonify("Removed from Reviews"))
+    
 
 @app.route('/logout')
 @login_required

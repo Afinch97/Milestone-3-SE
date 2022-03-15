@@ -118,11 +118,12 @@ def movie_info(id):
     if poster_path == None:
         poster = None;
     poster = POSTER_PATH_3 + poster_path
+    lil_poster = POSTER_PATH + poster_path
     tagline = data['tagline']
     overview = data['overview']
     release_date = data['release_date']
     
-    return (title, genres, poster, tagline, overview, release_date)
+    return (title, genres, poster, tagline, overview, release_date, lil_poster)
 
 def get_favorites(favs):
     titles =[]

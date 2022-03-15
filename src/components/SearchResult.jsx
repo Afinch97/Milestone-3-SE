@@ -10,6 +10,7 @@ const SearchResult = () =>  {
     const [posters, setPosters] = useState([])
     const [taglines, setTaglines] = useState([])
     const [titles, setTitles] = useState([])
+    const [fav, setFav ] = useState()
     const items= [];
     const getRepo = async () =>{
         await fetch(`/search/${query}`)
@@ -27,6 +28,10 @@ const SearchResult = () =>  {
     };
     useEffect(() => getRepo(), []);
     console.log(title, ids, titles, posters, taglines)
+    const Add = (e) =>{
+        e.preventDefault();
+        fetch(`/add/${e}`)
+    }
 
     for (let i = 0; i < 10; i++) {
         items.push(
@@ -36,9 +41,7 @@ const SearchResult = () =>  {
                 </p>
                 <img src={String(posters[i])} />
                 <p>{ taglines[i] }</p>
-                <form action={String(`/add/${ids[i]}`)}>
-                    <input type="submit" value="Add to Favorites"/>
-                </form>
+                <button onClick={() => Add(ids[i])}>Add to Favorites</button>
             </div>
         )
 

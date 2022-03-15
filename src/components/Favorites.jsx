@@ -11,6 +11,7 @@ const Favorites = () =>  {
     const [length, setLength] = useState()
     const [test, setTest] = useState({})
     const [there, setThere] = useState(false)
+    const [fav, setFav ] = useState()
     const items= [];
     const getRepo = async () =>{
         console.log("fetching")
@@ -32,6 +33,11 @@ const Favorites = () =>  {
         console.log(test)
         console.log(title, ids, titles, posters, taglines, length)
     }
+    const Delete =(na) => {
+        console.log(na)
+        fetch(`/remove/${na}`);
+
+    }
 
     for (let i = 0; i < length; i++) {
         items.push(
@@ -41,13 +47,12 @@ const Favorites = () =>  {
                 </p>
                 <img src={String(posters[i])} />
                 <p>{ taglines[i] }</p>
-                <form action={String(`/remove/${ids[i]}`)}>
-                    <input type="submit" value="Remove From Favorites"/>
-                </form>
+                    {console.log(ids[i])}
+                    <button onClick={() => Delete(ids[i])}>Remove from Favorites</button>
             </div>
         )
-
     }
+    console.log(fav)
      return (
         <>
         <h1>{title} Movies</h1>

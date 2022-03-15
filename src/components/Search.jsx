@@ -25,18 +25,21 @@ const Search = () =>  {
     };
     useEffect(() => getRepo(), []);
     console.log(title, ids, titles, posters, taglines)
+    const Add = (e) =>{
+        e.preventDefault();
+        fetch(`/add/${e}`)
+    };
 
     for (let i = 0; i < 10; i++) {
         items.push(
             <div class='item'>
                 <p><h2>({i+1}) {titles[i] }</h2>
-                <Link to={`/info/${ids[i]}`}><input type="submit" value="More info"/></Link>
+                <Link to={`/${ids[i]}`}><input type="submit" value="More info"/></Link>
                 </p>
                 <img src={String(posters[i])} />
                 <p>{ taglines[i] }</p>
-                <form action={String(`/add/${ids[i]}`)}>
-                    <input type="submit" value="Add to Favorites"/>
-                </form>
+                {console.log(ids[i])}
+                <button onClick={() => Add(ids[i])}>Add to Favorites</button>
             </div>
         )
 
